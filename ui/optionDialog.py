@@ -2,24 +2,26 @@
 # -*- coding: utf-8 -*-
 
 import wx
+import db.db_connection
 
-"""
-This class is a dialog
-to change options for 
-the application.
-Is opened from Tool->Options... menu
-"""
 class OptionDialog(wx.Dialog):
+    """
+    This class is a dialog
+    to change options for 
+    the application.
+    Is opened from Tool->Options... menu
+    """
 
-    """Init method."""
     def __init__(self, *args, **kw):
+        """Init method."""
         super(OptionDialog, self).__init__(*args, **kw)
 
         self.createView()
         self.SetTitle(_('Options'))
 
-    """Method creates the view of the dialog."""
     def createView(self):
+        """Method creates the view of the dialog."""
+
         panel = wx.Panel(self)
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         labelSizer = wx.BoxSizer(wx.VERTICAL)
@@ -39,6 +41,8 @@ class OptionDialog(wx.Dialog):
         clearActLbl = wx.StaticText(panel, wx.ID_ANY, _('Clear all buffered activities:'))
         labelSizer.Add(clearActLbl, 1, wx.ALL, 5)
 
+        prop = db.db_connection.read_properties()
+
         content = []
         for c in range(0, 51, 5):
             content.append(str(c))
@@ -48,12 +52,18 @@ class OptionDialog(wx.Dialog):
 
         self.titleCombo = wx.ComboBox(panel, wx.ID_ANY, style=wx.CB_READONLY, 
                                       value=content[-1], choices=content)
+        if(prop and prop['TitleNo'] in content):
+            self.titleCombo.SetValue(prop['TitleNo'])
+
         actionSizer.Add(self.titleCombo, 0, wx.ALL | wx.EXPAND, 5)
         self.titleClearBtn = wx.Button(panel, wx.ID_ANY, _('Clear titles'))
         self.Bind(wx.EVT_BUTTON, self.onTitleClear, self.titleClearBtn)
         actionSizer.Add(self.titleClearBtn, 0, wx.ALL | wx.ALIGN_CENTER, 5)
         self.actCombo = wx.ComboBox(panel, wx.ID_ANY, style=wx.CB_READONLY,
                                     value=content[-1], choices=content)
+        if(prop and prop['ActivitiesNo'] in content):
+            self.actCombo.SetValue(prop['ActivitiesNo'])
+ 
         actionSizer.Add(self.actCombo, 0, wx.ALL | wx.EXPAND, 5)
         self.actClearBtn = wx.Button(panel, wx.ID_ANY, _('Clear activities'))
         self.Bind(wx.EVT_BUTTON, self.onActivityClear, self.actClearBtn)
@@ -73,20 +83,35 @@ class OptionDialog(wx.Dialog):
         panel.SetSizer(mainSizer)
         mainSizer.Fit(self)
 
-    """Is triggered when clear title button is clicked."""
     def onTitleClear(self, event):
-        print('Title cleared.')
+        """Is triggered when clear title button is clicked."""
 
-    """Is triggered when clear activity is clicked."""
+        dialog = wx.MessageDialog(self, _('Are you sure that you want to clear title buffer?'),
+                                  _('Clear title buffer'), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
+        if dialog.ShowModal() == wx.ID_YES:
+            self.GetParent().clearTitles()
+        dialog.Destroy()
+
     def onActivityClear(self, event):
-        print('Activity cleared')
+        """Is triggered when clear activity is clicked."""
 
-    """Is triggered when cancel button is clicked."""
+        dialog = wx.MessageDialog(self, _('Are you sure that you want to clear activity buffer?'),
+                                  _('Clear activity buffer'), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
+        if dialog.ShowModal() == wx.ID_YES:
+            self.GetParent().clearActivities()
+        dialog.Destroy()
+
     def onCancel(self, event):
+        """Is triggered when cancel button is clicked."""
         self.Destroy()
 
-    """Is triggered when ok button is clicked."""
     def onOk(self, event):
-        print('Ok clicked')
+        """Is triggered when ok button is clicked."""
+
+        prop = {}
+        prop['TitleNo'] = self.titleCombo.GetValue()
+        prop['ActivitiesNo'] = self.actCombo.GetValue()
+        db.db_connection.save_properties(prop)
+        self.GetParent().updateCombos()
         self.Destroy()
 

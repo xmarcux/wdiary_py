@@ -11,19 +11,22 @@ import optionDialog
 import exportDialog
 import autoSortListCtrl
 
-
+import db.db_connection
+import diary
+"""
 test_dict = {
 1 : ('2014-03-17', '2:45', 'A little title that is the first', 'This is the first job to be described in this first python version of wdiary.'),
 2 : ('2014-03-18', '0:30', 'A short little title', 'A shoert description.'),
 3 : ('2014-03-20', '3:0', 'A1123-1 Fieing up the second pan', 'As the first pan does not give power enough to ahndle the heat. A second fire is started and the system will run fine all night.')
 }
+"""
 
-
-"""Main Window for application."""
 class MainWindow (wx.Frame):
+    """Main Window for application."""
 
-    """Init function"""
     def __init__(self):
+        """Init function"""
+
         wx.Frame.__init__(self, None, title=_('WDiary'), size=(400, 200))
         
         self.CreateStatusBar()
@@ -50,8 +53,8 @@ class MainWindow (wx.Frame):
         self.Center()
         self.Show(True)
 
-    """ Function that creates menu."""
     def createMenu(self):
+        """ Function that creates menu."""
 
         # Create file menu
         fileMenu = wx.Menu()
@@ -96,8 +99,9 @@ class MainWindow (wx.Frame):
 
         return menubar
 
-    """Create containers for widgets"""
     def createSizers(self):
+        """Create containers for widgets"""
+
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         box = wx.StaticBox(self.panel, wx.ID_ANY, _('Add new diary entry:'))
         self.topSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
@@ -110,8 +114,9 @@ class MainWindow (wx.Frame):
         self.panel.SetSizer(self.mainSizer)
         self.mainSizer.Fit(self)
 
-    """Creates items for the upper view in main window."""
     def createTopView(self):
+        """Creates items for the upper view in main window."""
+
         hSizer = wx.BoxSizer(wx.HORIZONTAL)
         descSizer = wx.BoxSizer(wx.VERTICAL)
         inputSizer = wx.BoxSizer(wx.VERTICAL)
@@ -147,31 +152,37 @@ class MainWindow (wx.Frame):
 
         descTitle = wx.StaticText(self.panel, wx.ID_ANY, _('Title:'))
         descSizer.Add(descTitle, 1, wx.ALL | wx.EXPAND, 5)
-        self.titleCombo = wx.ComboBox(self.panel, wx.ID_ANY)
+
+        titleItems = db.db_connection.read_titles()
+        self.titleCombo = wx.ComboBox(self.panel, wx.ID_ANY, choices=titleItems)
         self.Bind(wx.EVT_TEXT, self.onTitleChange, self.titleCombo)
         inputSizer.Add(self.titleCombo, 1, wx.ALL | wx.EXPAND, 5)
 
         descAct = wx.StaticText(self.panel, wx.ID_ANY, _('Activity:'))
         descSizer.Add(descAct, 1, wx.ALL | wx.EXPAND, 5)
-        act = [_('Documentation'), _('Project leading'), _('Programming'), _('Graphics')]
+
+        act = db.db_connection.read_activities()
+        #act = [_('Documentation'), _('Project leading'), _('Programming'), _('Graphics')]
         self.actCombo = wx.ComboBox(self.panel, wx.ID_ANY, choices=act)
         self.Bind(wx.EVT_TEXT, self.onActivityChange, self.actCombo)
         inputSizer.Add(self.actCombo, 1, wx.ALL | wx.EXPAND, 5)
 
 
         descDesc = wx.StaticText(self.panel, wx.ID_ANY, _('Description of work performed:'))
-        descText = wx.TextCtrl(self.panel, wx.ID_ANY, style=wx.TE_MULTILINE)
+        self.descText = wx.TextCtrl(self.panel, wx.ID_ANY, style=wx.TE_MULTILINE)
 
         self.addButton = wx.Button(self.panel, wx.ID_ANY, _('A&dd new entry'))
+        self.Bind(wx.EVT_BUTTON, self.onAddNewClicked, self.addButton)
         self.addButton.Disable()
 
         self.topSizer.Add(descDesc, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
-        self.topSizer.Add(descText, 1, wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
+        self.topSizer.Add(self.descText, 1, wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
         self.topSizer.Add(wx.StaticLine(self.panel), 0, wx.TOP | wx.BOTTOM | wx.EXPAND, 10)
         self.topSizer.Add(self.addButton, 0, wx.ALL | wx.ALIGN_CENTER, 5)
 
-    """Creates and layout items for bottom view."""
     def createBottomView(self):
+        """Creates and layout items for bottom view."""
+
         radioSizerBase = wx.BoxSizer(wx.HORIZONTAL)
         radioSizerLeft = wx.BoxSizer(wx.VERTICAL)
         radioSizerMiddle = wx.BoxSizer(wx.VERTICAL)
@@ -208,44 +219,17 @@ class MainWindow (wx.Frame):
         radioDescSizer.Add(self.radioDesc, 1, wx.ALL | wx.ALIGN_CENTER, 5)
         self.bottomSizer.Add(radioDescSizer, 0, wx.ALL | wx.EXPAND | wx.ALIGN_RIGHT, 5)
 
-    """
-    Creates the table list that shows 
-    current entries in bottom view.
-    """
     def createBottomListView(self):
+        """
+        Creates the table list that shows 
+        current entries in bottom view.
+        """
+
         self.list = autoSortListCtrl.AutoSortListCtrl(self.panel)
         self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRightListItem, self.list)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDoubleListItem, self.list)
 
-        items = test_dict.items()
-        for key, data in items:
-            i = self.list.InsertStringItem(sys.maxint, data[0])
-            self.list.SetStringItem(i, 1, data[1])
-            self.list.SetStringItem(i, 2, data[2])
-            self.list.SetStringItem(i, 3, data[3])
-            self.list.SetItemData(i, key)
-
-
-        """
-        i1 = self.list.InsertStringItem(sys.maxint, '2014-03-17')
-        self.list.SetStringItem(i1, 1, '2:45')
-        self.list.SetStringItem(i1, 2, 'A little title that is the first')
-        self.list.SetStringItem(i1, 3, 'This is the first job to be described in this first python version of wdiary.')
-        self.list.SetItemData(i1, 1)
-
-        i1 = self.list.InsertStringItem(sys.maxint, '2014-03-18')
-        self.list.SetStringItem(i1, 1, '0:30')
-        self.list.SetStringItem(i1, 2, 'A short little title')
-        self.list.SetStringItem(i1, 3, 'A shoert description.')
-        self.list.SetItemData(i1, 2)
-
-        i1 = self.list.InsertStringItem(sys.maxint, '2014-03-20')
-        self.list.SetStringItem(i1, 1, '3:0')
-        self.list.SetStringItem(i1, 2, 'A1123-1 Fieing up the second pan')
-        self.list.SetStringItem(i1, 3, 'As the first pan does not give power enough to ahndle the heat. A second fire is started and the system will run fine all night.')
-        self.list.SetItemData(i1, 3)
-        """
-
+        self.updateListItems()
         self.bottomSizer.Add(self.list, 1, wx.ALL | wx.EXPAND, 5)
 
     def setupAboutInfo(self):
@@ -271,8 +255,94 @@ class MainWindow (wx.Frame):
                                   'Contact: marcux@marcux.org\n'
                                   'Repro: https://github.com/xmarcux/wdiary_py\n')
 
-    """If all inputs has a valid value enable add button, else disable."""
+    def updateCombos(self):
+        """
+        Updates both title and activity combo. 
+        Properties file is read and number of saved
+        items is adjusted.
+        Titles and activities are saved to file.
+        """
+
+        titles = self.titleCombo.GetItems()
+        activity = self.actCombo.GetItems()
+
+        properties = db.db_connection.read_properties()
+
+        if(properties and properties['TitleNo']):
+            no = int(properties['TitleNo'])
+            if(len(titles) > no):
+                diff = len(titles) - no
+                for i in range(diff):
+                    del titles[0]
+        else:
+            if(len(titles) > 100):
+                diff = len(titles) - 100
+                for i in range(diff):
+                    del titles[0]
+
+        self.titleCombo.SetItems(titles)
+        db.db_connection.save_titles(titles)
+
+        if(properties and properties['ActivitiesNo']):
+            no = int(properties['ActivitiesNo'])
+            if(len(activity) > no):
+                diff = len(activity) - no
+                for i in range(diff):
+                    del activity[0]
+        else:
+            if(len(activity) > 100):
+                diff = len(activity) - 100
+                for i in range(diff):
+                    del activity[0]
+
+        self.actCombo.SetItems(activity)
+        db.db_connection.save_activities(activity)
+
+    def clearTitles(self):
+        """Clear all titles in combo and on file for reuse."""
+
+        self.titleCombo.SetItems([])
+        db.db_connection.save_titles([])
+
+    def clearActivities(self):
+        """Clear all activities in combo and on file for reuse."""
+
+        self.actCombo.SetItems([])
+        db.db_connection.save_activities([])
+
+    def appendTitleCombo(self, text):
+        """Appends text to title combo box."""
+
+        if text not in self.titleCombo.GetItems():
+            self.titleCombo.Append(text)
+
+    def appendActivityCombo(self, text):
+        """Appends text to activity combo box."""
+        
+        if text not in self.actCombo.GetItems():
+            self.actCombo.Append(text)
+
+    def onAddNewClicked(self, event):
+        """Is triggered when add new diary
+        button is clicked."""
+
+        date = self.dateCtrl.GetValue()
+        new_diary = diary.Diary(int(date.Format("%Y")), int(date.Format("%m")), int(date.Format("%d")))
+        new_diary.set_hour(int(self.hourCombo.GetValue()))
+        new_diary.set_minute(int(self.minCombo.GetValue()))
+        new_diary.set_title(self.titleCombo.GetValue())
+        new_diary.set_activity(self.actCombo.GetValue())
+        new_diary.set_description(self.descText.GetValue())
+
+        db.db_connection.save_to_db(new_diary)
+
+        self.appendTitleCombo(self.titleCombo.GetValue())
+        self.appendActivityCombo(self.actCombo.GetValue())
+        self.updateCombos()
+        self.updateListItems()
+
     def enableAddButton(self):
+        """If all inputs has a valid value enable add button, else disable."""
         if self.dateCtrl.GetValue().IsValid():
             self.dateCtrlValueOk = True
         else:
@@ -285,8 +355,9 @@ class MainWindow (wx.Frame):
         else:
             self.addButton.Disable()
 
-    """Is triggered when combo box for minutes is changed."""
     def onMinuteChange(self, event):
+        """Is triggered when combo box for minutes is changed."""
+
         if self.minCombo.GetSelection() != 0:
             self.minComboValueOk = True
         else:
@@ -294,8 +365,9 @@ class MainWindow (wx.Frame):
 
         self.enableAddButton()
 
-    """Is triggered when combo box for hours is changed."""
     def onHourChange(self, event):
+        """Is triggered when combo box for hours is changed."""
+
         if self.hourCombo.GetSelection() != 0:
             self.hourComboValueOk = True
         else:
@@ -303,8 +375,9 @@ class MainWindow (wx.Frame):
 
         self.enableAddButton()
 
-    """Is triggered when combo box for title is changed."""
     def onTitleChange(self, event):
+        """Is triggered when combo box for title is changed."""
+
         if self.titleCombo.GetValue() != '':
             self.titleComboValueOk = True
         else:
@@ -312,8 +385,9 @@ class MainWindow (wx.Frame):
 
         self.enableAddButton()
 
-    """Is triggered when combo box for activity is changed."""
     def onActivityChange(self, event):
+        """Is triggered when combo box for activity is changed."""
+
         if self.actCombo.GetValue() != '':
             self.actComboValueOk = True
         else:
@@ -321,8 +395,9 @@ class MainWindow (wx.Frame):
 
         self.enableAddButton()
 
-    """Is triggered when date is changed."""
     def onDateChanged(self, event):
+        """Is triggered when date is changed."""
+
         if self.dateCtrl.GetValue().IsValid():
             self.dateCtrlValueOk = True
         else:
@@ -330,41 +405,91 @@ class MainWindow (wx.Frame):
 
         self.enableAddButton()
 
-    """Is triggered when radiobutton today is clicked."""
     def onRadioToday(self, event):
+        """Is triggered when radiobutton today is clicked."""
+
         today = datetime.date.today()
         self.radioDesc.SetLabel(_('Current date:') + ' ' + today.isoformat())
+        self.updateListItems()
+        """
+        #Get todays diary entries
+        db_items = db.db_connection.search_db_date(today, today)
+        items = dict(zip(range(1, len(db_items)), db_items))
+        items = items.items()
+        self.list.DeleteAllItems()
+        for key, data in items:
+            i = self.list.InsertStringItem(sys.maxint, data.date_str())
+            self.list.SetStringItem(i, 1, data.time_str())
+            self.list.SetStringItem(i, 2, data.title())
+            self.list.SetStringItem(i, 3, data.description())
+            self.list.SetItemData(i, key)
+        """
 
-    """Is triggered when radiobutton yesterday is clicked."""
     def onRadioYesterday(self, event):
+        """Is triggered when radiobutton yesterday is clicked."""
+
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(1)
         self.radioDesc.SetLabel(_('Current date:') + ' ' + yesterday.isoformat())
+        self.updateListItems()
+        """
+        #Get yesterdays diary entries
+        db_items = db.db_connection.search_db_date(yesterday, yesterday)
+        items = dict(zip(range(1, len(db_items)), db_items))
+        items = items.items()
+        self.list.DeleteAllItems()
+        for key, data in items:
+            i = self.list.InsertStringItem(sys.maxint, data.date_str())
+            self.list.SetStringItem(i, 1, data.time_str())
+            self.list.SetStringItem(i, 2, data.title())
+            self.list.SetStringItem(i, 3, data.description())
+            self.list.SetItemData(i, key)
+        """
 
-    """Is triggered when radiobutton week is clicked"""
     def onRadioWeek(self, event):
+        """Is triggered when radiobutton week is clicked"""
+
         today = datetime.date.today()
         firstDay = today - datetime.timedelta(today.weekday())
         lastDay = today + datetime.timedelta(6 - today.weekday())
         self.radioDesc.SetLabel(_('Current dates:') + ' ' + firstDay.isoformat() \
                                 + ' ' + _('to') + ' ' + lastDay.isoformat())
+        self.updateListItems()
+        """
+        #Get this weeks diary entries
+        db_items = db.db_connection.search_db_date(firstDay, lastDay)
+        items = dict(zip(range(1, len(db_items)), db_items))
+        items = items.items()
+        self.list.DeleteAllItems()
+        for key, data in items:
+            i = self.list.InsertStringItem(sys.maxint, data.date_str())
+            self.list.SetStringItem(i, 1, data.time_str())
+            self.list.SetStringItem(i, 2, data.title())
+            self.list.SetStringItem(i, 3, data.description())
+            self.list.SetItemData(i, key)
+        """
 
-    """Is triggered when radiobutton last week is clicked."""
     def onRadioLastWeek(self, event):
+        """Is triggered when radiobutton last week is clicked."""
+
         today = datetime.date.today()
         firstDay = today - datetime.timedelta(7 + today.weekday())
         lastDay = firstDay + datetime.timedelta(6)
         self.radioDesc.SetLabel(_('Current dates:') + ' ' + firstDay.isoformat() \
                                 + ' ' + _('to') + ' ' + lastDay.isoformat())
+        self.updateListItems()
 
-    """Is triggered when radiobutton month is clicked."""
     def onRadioMonth(self, event):
+        """Is triggered when radiobutton month is clicked."""
+
         today = datetime.date.today()
         self.radioDesc.SetLabel(_('Current date:') + ' ' + str(today.year) \
                                 + ' ' + self.strMonth(today.month))
+        self.updateListItems()
 
-    """Is triggered when radiobutton last month is clicked."""
     def onRadioLastMonth(self, event):
+        """Is triggered when radiobutton last month is clicked."""
+
         today = datetime.date.today()
         if today.month == 1:
             year = today.year - 1
@@ -375,9 +500,11 @@ class MainWindow (wx.Frame):
 
         self.radioDesc.SetLabel(_('Current date:') + ' ' + str(year) \
                                 + ' ' + self.strMonth(month))
+        self.updateListItems()
 
-    """Is triggered when a list item is right clicked."""
     def onRightListItem(self, event):
+        """Is triggered when a list item is right clicked."""
+
         if self.list.GetFirstSelected() != -1:
             popupMenu = wx.Menu()
             editMenu = popupMenu.Append(wx.ID_EDIT, _('Edit item...'), _('Edit selected item.'))
@@ -388,54 +515,128 @@ class MainWindow (wx.Frame):
 
             self.list.PopupMenu(popupMenu, event.GetPosition())
 
-    """Is triggered when a list item is double clicked or enter is hit."""
     def onDoubleListItem(self, event):
-        print("double click on item.")
-        dataId = event.GetItem().GetData()
-        print(self.list.itemDataMap[dataId])
+        """Is triggered when a list item is double clicked or enter is hit."""
 
-    """Exit command trigged"""
+        dataId = event.GetItem().GetData()
+        dialog = editDiaryDialog.EditDiaryDialog(self)
+        dialog.addDiary(self.list.itemDataMap[dataId][0])
+        dialog.ShowModal()
+        dialog.Destroy()
+
+    def updateListItems(self):
+        """Updates list view for diaries"""
+
+        startDate = datetime.date.today()
+        endDate = datetime.date.today()
+
+        if self.radioYesterday.GetValue():
+            startDate = endDate - datetime.timedelta(1)
+            endDate = endDate - datetime.timedelta(1)
+        if self.radioWeek.GetValue():
+            startDate = endDate - datetime.timedelta(endDate.weekday())
+            endDate = endDate + datetime.timedelta(6 - endDate.weekday())
+        if self.radioLastWeek.GetValue():
+            startDate = endDate - datetime.timedelta(7 + endDate.weekday())
+            endDate = startDate + datetime.timedelta(6)
+        if self.radioMonth.GetValue():
+            startDate = datetime.date(startDate.year, startDate.month, 1)
+            endDate = datetime.date(endDate.year, endDate.month, 
+                                    self.__lastDayMonth(endDate.year, endDate.month))
+        if self.radioLastMonth.GetValue():
+            year = startDate.year
+            month = startDate.month - 1
+            if month == 0:
+                month = 12
+                year -= 1
+            startDate = datetime.date(year, month, 1)
+            endDate = datetime.date(year, month, self.__lastDayMonth(year, month))
+ 
+        db_items = db.db_connection.search_db_date(startDate, endDate)
+        itemsDict = dict(zip(range(1, len(db_items) + 1), db_items))
+        items = itemsDict.items()
+        mapDict = {}
+        self.list.DeleteAllItems()
+        for key, data in items:
+            i = self.list.InsertStringItem(sys.maxint, data.date_str())
+            self.list.SetStringItem(i, 1, data.time_str())
+            self.list.SetStringItem(i, 2, data.title())
+            self.list.SetStringItem(i, 3, data.description())
+            self.list.SetItemData(i, key)
+            mapDict[key] = (data,)
+
+        self.list.itemDataMap = mapDict
+
+    def __lastDayMonth(self, year, month):
+        """
+        Returns the last day of specified month as a number.
+        Need year if it is a leap year.
+        """
+        
+        lastDay = 31
+        if month == 4 or month == 6 or month == 9 or month == 11:
+            lastDay = 30
+
+        if month == 2:
+            if year % 4 == 0:
+                lastDay = 29
+            else:
+                lastDay = 28
+
+        return lastDay
+        
+
     def onExit(self, event):
+        """Exit command trigged"""
+
         self.Close()
 
-    """Export command trigged"""
     def onExport(self, event):
+        """Export command trigged"""
+
         dialog = exportDialog.ExportDialog(self)
         dialog.ShowModal()
         dialog.Destroy()
 
-    """Options command trigged"""
     def onOptions(self, event):
+        """Options command trigged"""
+
         dialog = optionDialog.OptionDialog(self)
         dialog.ShowModal()
         dialog.Destroy()
 
-    """About comand trigged"""
     def onAbout(self, event):
+        """About comand trigged"""
+
         wx.AboutBox(self.aboutInfo)
 
-    """
-    Is triggered when delete is clicked
-    on popup menu in list.
-    """
     def onDelete(self, event):
+        """
+        Is triggered when delete is clicked
+        on popup menu in list.
+        """
         dialog = wx.MessageDialog(self, _('Are you sure that you want to delete selected item?'),
                                   _('Delete'), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
         if dialog.ShowModal() == wx.ID_YES:
             print('Delete item')
         dialog.Destroy()
 
-    """
-    Is triggered when edit item is
-    clicked on popup menu in list.
-    """
     def onEdit(self, event):
+        """
+        Is triggered when edit item is
+        clicked on popup menu in list.
+        """
+
+        dataId = self.list.GetFirstSelected() + 1
         dialog = editDiaryDialog.EditDiaryDialog(self)
+        dialog.addDiary(self.list.itemDataMap[dataId][0])
         dialog.ShowModal()
         dialog.Destroy()
 
-    """Returns string representing month number 1-12."""
+
     def strMonth(self, monthNumber):
+        """Returns string representing month number 1-12."""
+    
         month = ''
 
         if monthNumber == 1:
