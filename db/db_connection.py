@@ -40,6 +40,19 @@ def save_to_db(d):
     conn.commit()
     conn.close()
 
+def delete_from_db(d):
+    """Deletes the diary from database.
+    If diary does not exist, nothing happens."""
+
+    conn = sqlite3.connect('db' + os.sep + 'wdiary.db')
+    cur = conn.cursor()
+
+    if d.id():
+        cur.execute("""DELETE FROM diary WHERE diaryID == ?""", (d.id(),))
+
+    conn.commit()
+    conn.close()
+
 def search_db(search_str):
     """Searches the diary table.
     All diaries where  title, activity or description 

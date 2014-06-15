@@ -13,13 +13,6 @@ import autoSortListCtrl
 
 import db.db_connection
 import diary
-"""
-test_dict = {
-1 : ('2014-03-17', '2:45', 'A little title that is the first', 'This is the first job to be described in this first python version of wdiary.'),
-2 : ('2014-03-18', '0:30', 'A short little title', 'A shoert description.'),
-3 : ('2014-03-20', '3:0', 'A1123-1 Fieing up the second pan', 'As the first pan does not give power enough to ahndle the heat. A second fire is started and the system will run fine all night.')
-}
-"""
 
 class MainWindow (wx.Frame):
     """Main Window for application."""
@@ -39,7 +32,12 @@ class MainWindow (wx.Frame):
         self.createBottomListView()
 
         self.setupAboutInfo()
-        
+
+        image = wx.Image('img/wdiary.png', wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        icon = wx.EmptyIcon()
+        icon.CopyFromBitmap(image)
+        self.SetIcon(icon)
+
         """Init flags for saving a diary."""
         self.hourComboValueOk = False
         self.minComboValueOk = False
@@ -235,7 +233,7 @@ class MainWindow (wx.Frame):
     def setupAboutInfo(self):
         self.aboutInfo = wx.AboutDialogInfo()
         self.aboutInfo.SetName('WDiary')
-        self.aboutInfo.SetVersion('Alpha')
+        self.aboutInfo.SetVersion('1.0.0')
         self.aboutInfo.SetDevelopers(['Marcus Pedersén'])
         self.aboutInfo.SetCopyright('WDiary (C) 2014 Marcus Pedersén')
         self.aboutInfo.SetDescription('A work diary to keep track of what you have done when.')
@@ -411,19 +409,6 @@ class MainWindow (wx.Frame):
         today = datetime.date.today()
         self.radioDesc.SetLabel(_('Current date:') + ' ' + today.isoformat())
         self.updateListItems()
-        """
-        #Get todays diary entries
-        db_items = db.db_connection.search_db_date(today, today)
-        items = dict(zip(range(1, len(db_items)), db_items))
-        items = items.items()
-        self.list.DeleteAllItems()
-        for key, data in items:
-            i = self.list.InsertStringItem(sys.maxint, data.date_str())
-            self.list.SetStringItem(i, 1, data.time_str())
-            self.list.SetStringItem(i, 2, data.title())
-            self.list.SetStringItem(i, 3, data.description())
-            self.list.SetItemData(i, key)
-        """
 
     def onRadioYesterday(self, event):
         """Is triggered when radiobutton yesterday is clicked."""
@@ -520,7 +505,7 @@ class MainWindow (wx.Frame):
 
         dataId = event.GetItem().GetData()
         dialog = editDiaryDialog.EditDiaryDialog(self)
-        dialog.addDiary(self.list.itemDataMap[dataId][0])
+        dialog.addDiary(self.list.itemDataMap[dataId][4])
         dialog.ShowModal()
         dialog.Destroy()
 
@@ -563,7 +548,7 @@ class MainWindow (wx.Frame):
             self.list.SetStringItem(i, 2, data.title())
             self.list.SetStringItem(i, 3, data.description())
             self.list.SetItemData(i, key)
-            mapDict[key] = (data,)
+            mapDict[key] = (data.date_str(), data.time_str(), data.title(), data.description(), data) 
 
         self.list.itemDataMap = mapDict
 
@@ -618,7 +603,10 @@ class MainWindow (wx.Frame):
         dialog = wx.MessageDialog(self, _('Are you sure that you want to delete selected item?'),
                                   _('Delete'), wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
         if dialog.ShowModal() == wx.ID_YES:
-            print('Delete item')
+            dataId = self.list.GetFirstSelected() + 1
+            db.db_connection.delete_from_db(self.list.itemDataMap[dataId][4])
+            self.updateListItems()
+
         dialog.Destroy()
 
     def onEdit(self, event):
@@ -629,7 +617,7 @@ class MainWindow (wx.Frame):
 
         dataId = self.list.GetFirstSelected() + 1
         dialog = editDiaryDialog.EditDiaryDialog(self)
-        dialog.addDiary(self.list.itemDataMap[dataId][0])
+        dialog.addDiary(self.list.itemDataMap[dataId][4])
         dialog.ShowModal()
         dialog.Destroy()
 

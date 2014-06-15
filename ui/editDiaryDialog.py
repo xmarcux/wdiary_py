@@ -131,12 +131,17 @@ class EditDiaryDialog(wx.Dialog):
             dialog.Destroy()
         else:
             date = self.dateCtrl.GetValue()
-            self.diary.setYear(date.GetYear())
-            self.diary.setMonth(date.GetMonth() + 1)
-            self.diary.setDay(date.GetDay())
+            self.diary.set_year(date.GetYear())
+            self.diary.set_month(date.GetMonth() + 1)
+            self.diary.set_day(date.GetDay())
 
-            self.diary.setHour(int(self.hourCombo.GetValue()))
-            self.diary.setMinute(int(self.minCombo.GetValue()))
+            self.diary.set_hour(int(self.hourCombo.GetValue()))
+            self.diary.set_minute(int(self.minCombo.GetValue()))
+            self.diary.set_title(self.titleCombo.GetValue())
+            self.diary.set_activity(self.actCombo.GetValue())
+            self.diary.set_description(self.descText.GetValue())
 
-            print('Dialog saved')
+            db.db_connection.save_to_db(self.diary)
+
+            self.GetParent().updateListItems()
             self.Destroy()
