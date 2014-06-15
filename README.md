@@ -1,6 +1,8 @@
 wdiary_py
 ======
 
+![WDiary] (https://raw.github.com/xmarcux/wdiary_py/master/img/wdiary.png)
+
 Project is written with python and wxpython and delivered under GPL V3.
 
     WDiary A work diary to keep track of what you have done when.
@@ -21,3 +23,6 @@ Project is written with python and wxpython and delivered under GPL V3.
 
 More information about python: http://www.python.org
 More information about wxpython: http://www.wxpython.org
+
+Screenshot:
+![Screenshot] (https://raw.github.com/xmarcux/wdiary_py/master/img/screenshot.png)
